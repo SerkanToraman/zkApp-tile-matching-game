@@ -1,0 +1,20 @@
+{
+  "extends": "@repo/typescript-config/react-library.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "src",
+    "module": "commonjs", // Use "commonjs" for Node.js-based modules
+    "target": "ES2020", // Set a target version that supports decorators
+    "moduleResolution": "node", // Node.js module resolution
+    "allowSyntheticDefaultImports": true,
+    "experimentalDecorators": true, // Enable support for decorators
+    "emitDecoratorMetadata": true, // Required to emit metadata for decorators
+    "strict": true, // Optional, set to false if too strict, or adjust further
+    "esModuleInterop": true, // Provides better compatibility with CommonJS modules
+    "skipLibCheck": true, // Skip type checking of declaration files, useful in monorepos
+    "declaration": true, // Emit TypeScript declarations
+    "emitDeclarationOnly": true // Emit only type declarations, not JavaScript
+  },
+  "include": ["src"],
+  "exclude": ["node_modules", "dist"]
+}
