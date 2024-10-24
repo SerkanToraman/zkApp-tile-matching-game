@@ -1,11 +1,8 @@
 {
-  "name": "@repo/chain",
+  "name": "@repo/zustand",
   "version": "0.0.0",
   "private": true,
-  "type": "module",
-  "exports": {
-    "./wallet": "./src/wallet.ts"
-  },
+  "exports": {},
   "scripts": {
     "lint": "eslint . --max-warnings 0",
     "generate:component": "turbo gen react-component"
@@ -13,8 +10,10 @@
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
+    "@repo/chain": "workspace:*",
     "@turbo/gen": "^1.12.4",
     "@types/eslint": "^8.56.5",
+    "@types/next": "^9.0.0",
     "@types/node": "^20.11.24",
     "@types/react": "^18.2.61",
     "@types/react-dom": "^18.2.19",
@@ -22,8 +21,7 @@
     "typescript": "^5.3.3"
   },
   "dependencies": {
-    "@aurowallet/mina-provider": "^1.0.6",
-    "o1js": "^2.0.0",
-    "react": "^18.2.0"
+    "react": "^18.2.0",
+    "zustand": "^5.0.0"
   }
 }
