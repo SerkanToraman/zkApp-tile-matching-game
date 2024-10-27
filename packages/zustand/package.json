@@ -2,7 +2,10 @@
   "name": "@repo/zustand",
   "version": "0.0.0",
   "private": true,
-  "exports": {},
+  "type": "module",
+  "exports": {
+    "./walletStore": "./store/walletStore.ts"
+  },
   "scripts": {
     "lint": "eslint . --max-warnings 0",
     "generate:component": "turbo gen react-component"

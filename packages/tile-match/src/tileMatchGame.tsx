@@ -6,30 +6,36 @@ import GameCompleted from "./components/GameCompleted";
 import LevelSelection from "./components/LevelSelection";
 import { calculateTilePosition } from "./helpers/calculateTilePosition";
 import { Tile } from "./components/Tile";
-import { calculateScore } from "./helpers/calculateScore"; // Import calculateScore
-import ScoreDisplay from "./components/ScoreDisplay"; // Import ScoreDisplay
-import Timer from "./components/Timer"; // Import Timer
+import { calculateScore } from "./helpers/calculateScore";
+import ScoreDisplay from "./components/ScoreDisplay";
+import Timer from "./components/Timer";
+import { useStartTimer, useStopTimer } from "./hooks/useTimer";
+import { v4 as uuidv4 } from "uuid"; // Generate a unique sessionId
 
 export default function TileMatchGame() {
-  const [selectedLevel, setSelectedLevel] = useState<number | null>(null); // Track selected level
-  const flippedTilesRef = useRef<{ id: string; url: string }[]>([]); // Use ref to track tiles
-  const [flippedBackIds, setFlippedBackIds] = useState<string[]>([]); // Track tiles to flip back
-  const [matchedTiles, setMatchedTiles] = useState<string[]>([]); // Track matched tiles
-  const [isChecking, setIsChecking] = useState(false); // Prevent flipping while checking
-  const [disappearingTiles, setDisappearingTiles] = useState<string[]>([]); // Track tiles to be removed
-  const [score, setScore] = useState(0); // Track the player's score
-  const [resetTimer, setResetTimer] = useState(false); // Track whether the timer should reset
-  const [formattedTime, setFormattedTime] = useState<string>(""); // Track the formatted time
+  const [sessionId, setSessionId] = useState<string>(""); // Track sessionId for each game
+  const [selectedLevel, setSelectedLevel] = useState<number | null>(null);
+  const flippedTilesRef = useRef<{ id: string; url: string }[]>([]);
+  const [flippedBackIds, setFlippedBackIds] = useState<string[]>([]);
+  const [matchedTiles, setMatchedTiles] = useState<string[]>([]);
+  const [isChecking, setIsChecking] = useState(false);
+  const [disappearingTiles, setDisappearingTiles] = useState<string[]>([]);
+  const [score, setScore] = useState(0);
+  const [resetTimer, setResetTimer] = useState(false);
+  const [formattedTime, setFormattedTime] = useState<string>("");
 
-  // Generate the appropriate number of tiles based on the selected level
+  // Initialize hooks with start and stop mutations
+  const startTimerMutation = useStartTimer();
+  const stopTimerMutation = useStopTimer();
+
   const generateTilesForLevel = (level: number) => {
-    if (level === 1) return generateTiles(8); // Level 1: 8 unique tiles (16 total)
-    if (level === 2) return generateTiles(16); // Level 2: 16 unique tiles (32 total)
-    if (level === 3) return generateTiles(24); // Level 3: 24 unique tiles (48 total)
+    if (level === 1) return generateTiles(8);
+    if (level === 2) return generateTiles(16);
+    if (level === 3) return generateTiles(24);
     return [];
   };
 
-  const tiles = useRef(generateTilesForLevel(selectedLevel || 1)); // Default to level 1 if no level is selected
+  const tiles = useRef(generateTilesForLevel(selectedLevel || 1));
 
   const handleTileFlip = (id: string, url: string) => {
     if (isChecking || flippedTilesRef.current.length >= 2) return;
@@ -50,9 +56,8 @@ export default function TileMatchGame() {
           flippedTilesRef.current = [];
           setIsChecking(false);
 
-          // Update the score based on the level and current matches
           if (selectedLevel) {
-            const newScore = calculateScore(selectedLevel, 1); // 1 match
+            const newScore = calculateScore(selectedLevel, 1);
             setScore((prevScore) => prevScore + newScore);
           }
         }, 1000);
@@ -82,55 +87,61 @@ export default function TileMatchGame() {
   const canFlipMore = flippedTilesRef.current.length < 2 && !isChecking;
   const isGameCompleted = disappearingTiles.length === tiles.current.length;
 
-  // Reset the timer when a new level is selected
+  // Start timer and reset state when a level is selected
   useEffect(() => {
     if (selectedLevel !== null) {
+      const newSessionId = uuidv4(); // Generate a new sessionId
+      setSessionId(newSessionId); // Store sessionId for this game session
+      startTimerMutation.mutate(newSessionId); // Call start-timer API with sessionId
       setResetTimer(true);
-      setTimeout(() => setResetTimer(false), 100); // Reset the timer
+      setTimeout(() => setResetTimer(false), 100);
     }
   }, [selectedLevel]);
+
+  // Stop timer when the game completes
+  useEffect(() => {
+    if (isGameCompleted) {
+      stopTimerMutation.mutate(sessionId, {
+        onSuccess: (data) => {
+          // Assuming data.duration is the total time from the API response
+          setFormattedTime(data.duration.toString());
+        },
+      });
+    }
+  }, [isGameCompleted]);
 
   return (
     <div style={{ width: "100vw", height: "100vh" }}>
       {!selectedLevel ? (
-        // Show the level selection page if no level is selected
         <LevelSelection
           onSelectLevel={(level) => {
             setSelectedLevel(level);
-            tiles.current = generateTilesForLevel(level); // Generate tiles based on level
+            tiles.current = generateTilesForLevel(level);
           }}
         />
       ) : isGameCompleted ? (
-        <GameCompleted score={score} time={formattedTime} /> // Pass score and time to GameCompleted
+        <GameCompleted score={score} time={formattedTime} />
       ) : (
         <>
-          {/* Display the score */}
           <ScoreDisplay score={score} />
-
-          {/* Display the timer */}
           <Timer
             isGameCompleted={isGameCompleted}
             reset={resetTimer}
-            onTimeUpdate={setFormattedTime} // Callback to set formatted time when updated
+            onTimeUpdate={setFormattedTime}
           />
-
           <Canvas camera={{ position: [0, 0, 25], fov: 75 }}>
             <ambientLight intensity={2} />
             <directionalLight position={[1, 1, 1]} intensity={0.5} />
-
             {tiles.current.map((tile, index) => {
               const totalTiles = tiles.current.length;
-
-              // Calculate the position using the external helper function
               const { x, y } = calculateTilePosition(index, totalTiles);
 
-              // Do not render disappearing tiles
               return disappearingTiles.includes(tile.id) ? null : (
                 <Tile
                   key={tile.id}
                   id={tile.id}
                   url={tile.url}
-                  position={[x, y, 0]} // Use the dynamically calculated centered position
+                  position={[x, y, 0]}
                   offset={-2}
                   canFlip={canFlipMore}
                   isFlippedExternally={!flippedBackIds.includes(tile.id)}

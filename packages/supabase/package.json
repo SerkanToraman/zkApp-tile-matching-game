@@ -2,6 +2,7 @@
   "name": "@repo/supabase",
   "version": "0.0.0",
   "private": true,
+  "type": "module",
   "exports": {
     "./client": "./utils/client.ts",
     "./server": "./utils/server.ts",

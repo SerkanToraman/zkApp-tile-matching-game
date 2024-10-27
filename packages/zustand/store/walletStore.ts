@@ -8,30 +8,39 @@ interface WalletState {
   setAccount: (account: string | null) => void;
 }
 
-const wallet = new Wallet(); // Create an instance of the Wallet class
+const wallet = typeof window !== "undefined" ? new Wallet() : null; // Ensure wallet is created only in the client environment
 
 export const useWalletStore = create<WalletState>((set) => ({
-  walletInfo: wallet.getWalletInfo(), // Initialize with the default wallet info
+  walletInfo: wallet
+    ? wallet.getWalletInfo()
+    : { account: null, network: null, isConnected: false }, // Initialize with the default wallet info
 
   // Connect to the wallet and update the Zustand state
   connect: async () => {
-    const walletInfo = await wallet.connect();
-    set({ walletInfo });
+    if (wallet) {
+      const walletInfo = await wallet.connect();
+      set({ walletInfo });
+    }
   },
 
   // Disconnect the wallet and update the Zustand state
   disconnect: () => {
-    const walletInfo = wallet.disconnect();
-    set({ walletInfo });
+    if (wallet) {
+      const walletInfo = wallet.disconnect();
+      set({ walletInfo });
+    }
   },
 
   // Optional: If you need to update the account manually
   setAccount: (account: string | null) => {
-    set((state) => ({
-      walletInfo: {
-        ...state.walletInfo,
-        account: account ? PublicKey.fromBase58(account) : null,
-      },
-    }));
+    if (wallet) {
+      set((state) => ({
+        walletInfo: {
+          ...state.walletInfo,
+          account: account ? PublicKey.fromBase58(account) : null,
+          network: state.walletInfo.network ?? null, // Ensures `network` is always `ChainInfoArgs | null`
+        },
+      }));
+    }
   },
 }));

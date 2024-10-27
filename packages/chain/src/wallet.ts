@@ -2,25 +2,30 @@ import { PublicKey } from "o1js";
 import { ChainInfoArgs, SwitchChainArgs } from "@aurowallet/mina-provider";
 
 export interface WalletInfo {
-  account: PublicKey | null;
+  account: string | null; // Use string instead of PublicKey for UI friendliness
   network: ChainInfoArgs | null;
   isConnected: boolean;
 }
 
 export class Wallet {
-  private account: PublicKey | null = null;
+  private account: string | null = null; // Store account as a string (Base58)
   private network: ChainInfoArgs | null = null;
   private isConnected = false;
 
   // Method to connect the wallet
   public async connect(): Promise<WalletInfo> {
-    if (!window.mina) throw new Error("Wallet not installed");
+    if (typeof window === "undefined" || !window.mina) {
+      throw new Error("Auro Wallet not installed");
+    }
 
     const accounts = await window.mina.requestAccounts();
     if (accounts.length > 0 && accounts[0]) {
-      this.account = PublicKey.fromBase58(accounts[0]);
+      this.account = PublicKey.fromBase58(accounts[0]).toBase58();
       this.isConnected = true;
       this.network = await window.mina.requestNetwork();
+    } else {
+      this.isConnected = false;
+      this.account = null;
     }
 
     return this.getWalletInfo();
@@ -36,7 +41,7 @@ export class Wallet {
 
   // Method to switch network
   public async switchNetwork(args: SwitchChainArgs): Promise<WalletInfo> {
-    if (!window.mina) throw new Error("Wallet not installed");
+    if (!window.mina) throw new Error("Auro Wallet not installed");
 
     const response = await window.mina.switchChain(args);
     if ("networkID" in response) {
@@ -49,7 +54,7 @@ export class Wallet {
   // Get current wallet info
   public getWalletInfo(): WalletInfo {
     return {
-      account: this.account,
+      account: this.account, // Already a string in Base58 format
       network: this.network,
       isConnected: this.isConnected,
     };

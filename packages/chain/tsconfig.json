@@ -3,7 +3,7 @@
   "compilerOptions": {
     "outDir": "dist",
     "rootDir": "src",
-    "module": "commonjs", // Use "commonjs" for Node.js-based modules
+    "module": "ES2022", // Use "commonjs" for Node.js-based modules
     "target": "ES2020", // Set a target version that supports decorators
     "moduleResolution": "node", // Node.js module resolution
     "allowSyntheticDefaultImports": true,
