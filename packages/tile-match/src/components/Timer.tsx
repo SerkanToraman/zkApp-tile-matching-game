@@ -1,10 +1,9 @@
-// components/Timer.tsx
 import React, { useState, useEffect } from "react";
 
 interface TimerProps {
   isGameCompleted: boolean;
   reset: boolean;
-  onTimeUpdate: (formattedTime: string) => void; // Add onTimeUpdate prop
+  onTimeUpdate: (formattedTime: string) => void;
 }
 
 const Timer: React.FC<TimerProps> = ({
@@ -13,37 +12,28 @@ const Timer: React.FC<TimerProps> = ({
   onTimeUpdate,
 }) => {
   const [seconds, setSeconds] = useState(0);
-  const [isRunning, setIsRunning] = useState(false);
 
   // Start the timer when the component mounts or reset occurs
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
 
-    if (!isGameCompleted && !isRunning) {
-      setIsRunning(true); // Start the timer when the game begins
-    }
-
-    if (isRunning && !isGameCompleted) {
+    if (!isGameCompleted) {
       interval = setInterval(() => {
         setSeconds((prevSeconds) => prevSeconds + 1);
       }, 1000);
-    }
-
-    if (isGameCompleted && interval) {
+    } else if (interval) {
       clearInterval(interval); // Stop the timer when the game is completed
-      setIsRunning(false);
     }
 
     return () => {
       if (interval) clearInterval(interval); // Clear the interval when the component unmounts or the game stops
     };
-  }, [isRunning, isGameCompleted]);
+  }, [isGameCompleted]);
 
   // Reset the timer when the game restarts
   useEffect(() => {
     if (reset) {
       setSeconds(0);
-      setIsRunning(false);
     }
   }, [reset]);
 
