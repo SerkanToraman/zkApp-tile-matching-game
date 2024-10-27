@@ -3,7 +3,6 @@ import { useMutation } from "@tanstack/react-query";
 import axios from "axios";
 
 interface StartTimerResponse {
-  message: string;
   startTime: string; // Assuming start time is returned as a string
 }
 
@@ -11,15 +10,24 @@ interface StopTimerResponse {
   duration: number; // Duration in seconds
 }
 
-// Modified startTimer to accept sessionId as a parameter
+// Start timer function with sessionId as a parameter
 const startTimer = async (sessionId: string): Promise<StartTimerResponse> => {
-  const response = await axios.post("/api/start-timer", { sessionId });
+  const response = await axios.post(
+    "http://localhost:8585/api/timer/start-timer",
+    {
+      sessionId,
+    }
+  );
   return response.data;
 };
 
-// Modified stopTimer to accept sessionId as a parameter
 const stopTimer = async (sessionId: string): Promise<StopTimerResponse> => {
-  const response = await axios.post("/api/stop-timer", { sessionId });
+  const response = await axios.post(
+    "http://localhost:8585/api/timer/stop-timer",
+    {
+      sessionId,
+    }
+  );
   return response.data;
 };
 
