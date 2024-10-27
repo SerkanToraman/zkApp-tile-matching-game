@@ -3,7 +3,9 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "exports": {},
+  "exports": {
+    "./wallet": "./src/wallet.ts"
+  },
   "scripts": {
     "lint": "eslint . --max-warnings 0",
     "generate:component": "turbo gen react-component"
@@ -20,6 +22,7 @@
     "typescript": "^5.3.3"
   },
   "dependencies": {
+    "@aurowallet/mina-provider": "^1.0.6",
     "o1js": "^2.0.0",
     "react": "^18.2.0"
   }

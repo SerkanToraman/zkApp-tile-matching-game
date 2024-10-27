@@ -1,12 +1,10 @@
 {
-  "name": "@repo/supabase",
+  "name": "@repo/zustand",
   "version": "0.0.0",
   "private": true,
   "type": "module",
   "exports": {
-    "./client": "./utils/client.ts",
-    "./server": "./utils/server.ts",
-    "./middleware": "./utils/middleware.ts"
+    "./walletStore": "./store/walletStore.ts"
   },
   "scripts": {
     "lint": "eslint . --max-warnings 0",
@@ -15,6 +13,7 @@
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
+    "@repo/chain": "workspace:*",
     "@turbo/gen": "^1.12.4",
     "@types/eslint": "^8.56.5",
     "@types/next": "^9.0.0",
@@ -25,9 +24,7 @@
     "typescript": "^5.3.3"
   },
   "dependencies": {
-    "@supabase/ssr": "^0.5.1",
-    "@supabase/supabase-js": "^2.45.6",
-    "next": "14.2.6",
-    "react": "^18.2.0"
+    "react": "^18.2.0",
+    "zustand": "^5.0.0"
   }
 }
