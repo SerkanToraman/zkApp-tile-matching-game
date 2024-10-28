@@ -1,14 +1,18 @@
+// components/GameCompleted.tsx
+
 import React from "react";
-import { calculateFinalScore } from "../helpers/calculateScore";
 
 interface GameCompletedProps {
   score: number;
-  time: string; // Time will be passed as a formatted string
+  time: string;
+  finalScore: number; // Add finalScore to the props
 }
 
-const GameCompleted: React.FC<GameCompletedProps> = ({ score, time }) => {
-  const finalScore = calculateFinalScore(score, time); // Calculate the final score
-
+const GameCompleted: React.FC<GameCompletedProps> = ({
+  score,
+  time,
+  finalScore,
+}) => {
   return (
     <div
       style={{

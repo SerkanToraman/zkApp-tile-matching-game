@@ -1,57 +1,44 @@
 "use client";
 import { Canvas } from "@react-three/fiber";
 import { useRef, useState, useEffect } from "react";
-import axios from "axios";
+import { fetchTiles, verifyMatch, fetchFinalScore } from "./hooks/useTileGame";
 import GameCompleted from "./components/GameCompleted";
 import LevelSelection from "./components/LevelSelection";
 import { calculateTilePosition } from "./helpers/calculateTilePosition";
 import { Tile } from "./components/Tile";
-import { calculateScore } from "./helpers/calculateScore";
 import ScoreDisplay from "./components/ScoreDisplay";
 import Timer from "./components/Timer";
-import { useStartTimer, useStopTimer } from "./hooks/useTimer";
 
 export default function TileMatchGame() {
   const [sessionId, setSessionId] = useState<string>(""); // Track sessionId for each game
   const [selectedLevel, setSelectedLevel] = useState<number | null>(null);
-  const [tiles, setTiles] = useState<{ id: string; url: string }[]>([]); // State for tiles fetched from the server
+  const [tiles, setTiles] = useState<{ id: string; url: string }[]>([]);
   const flippedTilesRef = useRef<{ id: string; url: string }[]>([]);
   const [flippedBackIds, setFlippedBackIds] = useState<string[]>([]);
   const [matchedTiles, setMatchedTiles] = useState<string[]>([]);
   const [isChecking, setIsChecking] = useState(false);
   const [disappearingTiles, setDisappearingTiles] = useState<string[]>([]);
-  const [score, setScore] = useState(0);
+  const [score, setScore] = useState<number>(0);
   const [resetTimer, setResetTimer] = useState(false);
   const [formattedTime, setFormattedTime] = useState<string>("");
-
-  const startTimerMutation = useStartTimer();
-  const stopTimerMutation = useStopTimer();
+  const [finalScore, setFinalScore] = useState<number>(0);
 
   // Fetch tiles from the server based on the selected level
   useEffect(() => {
     if (selectedLevel !== null) {
-      const fetchTiles = async () => {
+      const fetchTilesFromServer = async () => {
         try {
           const tileCount = selectedLevel * 8;
-          const response = await axios.get(
-            `http://localhost:8585/api/tile-game/generate-tiles`,
-            {
-              params: { tileCount },
-            }
-          );
-
-          console.log("Fetched tiles and sessionId:", response.data);
-          setSessionId(response.data.sessionId); // Set sessionId from server response
-          setTiles(response.data.tiles); // Set tiles in state
-
-          startTimerMutation.mutate(response.data.sessionId); // Start timer with sessionId
+          const { sessionId, tiles } = await fetchTiles(tileCount); // Use imported fetchTiles
+          setSessionId(sessionId);
+          setTiles(tiles);
           setResetTimer(true);
           setTimeout(() => setResetTimer(false), 100);
         } catch (error) {
           console.error("Error fetching tiles:", error);
         }
       };
-      fetchTiles();
+      fetchTilesFromServer();
     }
   }, [selectedLevel]);
 
@@ -64,39 +51,25 @@ export default function TileMatchGame() {
       setIsChecking(true);
 
       const [tile1, tile2] = flippedTilesRef.current;
-      console.log("Checking match between:", tile1, tile2);
-
       if (tile1 && tile2) {
         try {
-          const isMatchResponse = await axios.post(
-            `http://localhost:8585/api/tile-game/verify-match`,
-            {
-              sessionId, // Send sessionId for server-based tile match lookup
-              id1: tile1.id,
-              id2: tile2.id,
-            }
-          );
-          const isMatch = isMatchResponse.data.isMatch;
-          console.log("Match result:", isMatch);
-
+          const { isMatch } = await verifyMatch({
+            sessionId,
+            id1: tile1.id,
+            id2: tile2.id,
+          });
           if (isMatch) {
             const matchedTileIds = [tile1.id, tile2.id];
             setTimeout(() => {
               setMatchedTiles((matched) => [...matched, ...matchedTileIds]);
               flippedTilesRef.current = [];
               setIsChecking(false);
-
-              if (selectedLevel) {
-                const newScore = calculateScore(selectedLevel, 1);
-                setScore((prevScore) => prevScore + newScore);
-              }
             }, 1000);
           } else {
             const unmatchedTileIds = [tile1.id, tile2.id];
             setTimeout(() => {
               setFlippedBackIds(unmatchedTileIds);
               flippedTilesRef.current = [];
-
               setTimeout(() => {
                 setFlippedBackIds([]);
                 setIsChecking(false);
@@ -121,11 +94,20 @@ export default function TileMatchGame() {
 
   useEffect(() => {
     if (isGameCompleted) {
-      stopTimerMutation.mutate(sessionId, {
-        onSuccess: (data) => {
-          setFormattedTime(data.duration.toString());
-        },
-      });
+      const fetchScoreFromServer = async () => {
+        try {
+          const { score, time, finalScore } = await fetchFinalScore({
+            sessionId,
+            level: selectedLevel!,
+          });
+          setScore(score);
+          setFormattedTime(time.toString());
+          setFinalScore(finalScore);
+        } catch (error) {
+          console.error("Error fetching final score data:", error);
+        }
+      };
+      fetchScoreFromServer();
     }
   }, [isGameCompleted]);
 
@@ -138,7 +120,11 @@ export default function TileMatchGame() {
           }}
         />
       ) : isGameCompleted ? (
-        <GameCompleted score={score} time={formattedTime} />
+        <GameCompleted
+          score={score}
+          time={formattedTime}
+          finalScore={finalScore}
+        />
       ) : (
         <>
           <ScoreDisplay score={score} />
